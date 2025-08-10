@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Main application service
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: iot-control-app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+mysqlconnector://root:password@db:3306/iot_control_db
+      - SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=300
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=iot/device/control
+      - GEMINI_API_KEY=AIzaSyDW4KIZV_7RwP2fTtDY1ui9iPt1XC8ZL4Q
+    depends_on:
+      - db
+      - mqtt-broker
+    networks:
+      - iot-network
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: iot-mysql-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=iot_control_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # MQTT Broker (Eclipse Mosquitto)
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0
+    container_name: iot-mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mosquitto_data:
+  mosquitto_logs:
+
+networks:
+  iot-network:
+    driver: bridge
