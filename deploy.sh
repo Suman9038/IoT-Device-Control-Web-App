@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting IoT Control App Deployment..."
+echo " Starting IoT Control App Deployment..."
 
 # Stop existing containers
 echo "Stopping existing containers..."
